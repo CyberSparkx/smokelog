@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     paddingVertical: 28,
     paddingHorizontal: 24,
-    // Soft elevated shadow, iOS + Android
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
