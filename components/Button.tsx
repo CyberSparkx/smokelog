@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -41,6 +41,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const lastPressRef = useRef(0); // timestamp of last accepted press
+  const [inCooldown, setInCooldown] = useState(false);
 
   const animateIn = () => {
     Animated.spring(scale, {
@@ -64,34 +65,42 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const handlePress = (e: GestureResponderEvent) => {
-    if (disabled) return;
+    if (disabled || inCooldown) return;
 
     const now = Date.now();
     if (now - lastPressRef.current < cooldownMs) return; // swallow the double-tap
     lastPressRef.current = now;
 
+    setInCooldown(true);
     onPress(e);
+
+    setTimeout(() => {
+      setInCooldown(false);
+    }, cooldownMs);
   };
+
+  const isButtonDisabled = disabled || inCooldown;
+  const displayedLabel = inCooldown ? 'Logged! 🚭' : label;
 
   return (
     <Pressable
-      onPressIn={disabled ? undefined : animateIn}
-      onPressOut={disabled ? undefined : animateOut}
+      onPressIn={isButtonDisabled ? undefined : animateIn}
+      onPressOut={isButtonDisabled ? undefined : animateOut}
       onPress={handlePress}
-      disabled={disabled}
+      disabled={isButtonDisabled}
       hitSlop={8}
     >
       <Animated.View
         style={[
           styles.base,
           styles[variant],
-          disabled && styles.disabled,
+          isButtonDisabled && styles.disabled,
           style,
           { transform: [{ scale }] },
         ]}
       >
         <Text style={[baseTextStyle, textStyles[variant], textStyle]}>
-          {label}
+          {displayedLabel}
         </Text>
       </Animated.View>
     </Pressable>

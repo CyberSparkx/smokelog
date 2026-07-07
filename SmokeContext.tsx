@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   useMemo,
   useCallback,
   ReactNode,
@@ -11,7 +10,7 @@ import { safeStorage, STORAGE_KEYS } from './mmkvStorage';
 
 export interface SmokeLogEntry {
   id: string;
-  loggedAt: string; // ISO string, matches what <SmokeHistory /> expects
+  loggedAt: string; 
 }
 
 interface SmokeContextValue {
@@ -20,7 +19,6 @@ interface SmokeContextValue {
   todayCount: number;
   monthCount: number;
   storageError: boolean;
-  isHydrated: boolean;
   logSmoke: () => void;
 }
 
@@ -42,21 +40,13 @@ function isSameMonth(a: Date, b: Date): boolean {
 }
 
 export const SmokeProvider = ({ children }: { children: ReactNode }) => {
-  const [lastSmokedAt, setLastSmokedAt] = useState<number | null>(null);
-  const [history, setHistory] = useState<number[]>([]);
+  const [lastSmokedAt, setLastSmokedAt] = useState<number | null>(() =>
+    safeStorage.getNumber(STORAGE_KEYS.LAST_SMOKED_AT)
+  );
+  const [history, setHistory] = useState<number[]>(() =>
+    safeStorage.getHistory()
+  );
   const [storageError, setStorageError] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Load persisted state once on mount. MMKV is synchronous, so there's
-  // no real async gap — this just keeps first-render safe in case the
-  // native module isn't ready on the very first tick.
-  useEffect(() => {
-    const storedLast = safeStorage.getNumber(STORAGE_KEYS.LAST_SMOKED_AT);
-    const storedHistory = safeStorage.getHistory();
-    setLastSmokedAt(storedLast);
-    setHistory(storedHistory);
-    setIsHydrated(true);
-  }, []);
 
   const logSmoke = useCallback(() => {
     const now = Date.now();
@@ -67,8 +57,6 @@ export const SmokeProvider = ({ children }: { children: ReactNode }) => {
     );
 
     if (!wroteTimestamp) {
-      // Don't update in-memory state as if it succeeded — that would
-      // show a reset counter the user thinks was saved, but wasn't.
       setStorageError(true);
       return;
     }
@@ -82,13 +70,11 @@ export const SmokeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Derived, render-ready values — computed here once, not duplicated
-  // in every screen that needs a count or a formatted log list.
   const logs: SmokeLogEntry[] = useMemo(
     () =>
       history
         .slice()
-        .reverse() // newest first, typical for a history list
+        .reverse() 
         .map((ts) => ({
           id: String(ts),
           loggedAt: new Date(ts).toISOString(),
@@ -112,7 +98,6 @@ export const SmokeProvider = ({ children }: { children: ReactNode }) => {
     todayCount,
     monthCount,
     storageError,
-    isHydrated,
     logSmoke,
   };
 
@@ -121,11 +106,6 @@ export const SmokeProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-/**
- * Throws clearly if used outside the provider, instead of silently
- * returning `undefined` and letting components crash later on
- * `.lastSmokedAt` of undefined with a confusing error.
- */
 export function useSmoke(): SmokeContextValue {
   const ctx = useContext(SmokeContext);
   if (!ctx) {

@@ -48,11 +48,75 @@ const Screen = () => {
   );
 };
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.warn('[ErrorBoundary] Caught rendering error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SafeAreaView
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.background,
+            padding: 24,
+            gap: 16,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '700',
+              color: theme.textPrimary,
+              textAlign: 'center',
+            }}
+          >
+            Something went wrong ⚠️
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: theme.textSecondary,
+              textAlign: 'center',
+              marginBottom: 8,
+            }}
+          >
+            The application encountered an unexpected error.
+          </Text>
+          <Button
+            label="Try Again"
+            variant="primary"
+            onPress={() => this.setState({ hasError: false })}
+          />
+        </SafeAreaView>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App = () => (
   <SafeAreaProvider>
-    <SmokeProvider>
-      <Screen />
-    </SmokeProvider>
+    <ErrorBoundary>
+      <SmokeProvider>
+        <Screen />
+      </SmokeProvider>
+    </ErrorBoundary>
   </SafeAreaProvider>
 );
 

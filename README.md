@@ -1,98 +1,102 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Smokelog 🚭
 
-# Getting Started
+A premium, robust React Native application built with TypeScript to log and track cigarette consumption. It features a real-time live counter, daily and monthly metrics, and a chronological history list, all backed by ultra-fast MMKV storage.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 🌟 Key Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### 1. **Real-time Live Counter Dashboard**
+- Tracks the precise time elapsed (days, hours, minutes, seconds) since the last logged cigarette.
+- Syncs perfectly with background/foreground app state changes by listening to `AppState` events.
+- Zero layout shift: Synchronously loads values on boot to eliminate any zero-state screen flicker.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### 2. **Double-Tap Protection & Debounce**
+- Captures logs instantly but debounces subsequent taps for `500ms`.
+- Visually updates the button to `Logged! 🚭` and disables interaction during the cooldown to prevent double logging.
 
-```sh
-# Using npm
-npm start
+### 3. **Smart Statistics & History**
+- **Today's count** & **Monthly count** computed efficiently using React's `useMemo` hooks.
+- Beautiful, scrollable historical log list sorted by the latest entries first.
 
-# OR using Yarn
-yarn start
+### 4. **Resilient Failure Fallbacks**
+- **Native Safeguards**: Wraps the MMKV initialization so that if C++ native modules fail to load (such as in Expo Go or Jest test runner environments), the app degrades to a safe memory mode rather than hard-crashing.
+- **Timestamp Validation**: Sanitizes stored records so clock skews or database corruptions don't throw statistics off.
+- **Root Error Boundary**: Root-level `ErrorBoundary` intercepts layout or render-time errors, presenting a user-friendly recovery interface.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Core Framework**: React Native (0.86.0)
+- **Programming Language**: TypeScript (5.8.3)
+- **Local Persistence**: `react-native-mmkv` (v4.x, backed by Nitro Modules C++)
+- **Safe Area Layout**: `react-native-safe-area-context`
+- **Testing**: Jest & `react-test-renderer`
+
+---
+
+## 🏗️ Architectural Decisions
+
+- **React Context API State Management**: Encapsulates all storage reads, writes, and computations inside `SmokeProvider` (`SmokeContext.tsx`). Components consume data cleanly via the custom `useSmoke()` hook.
+- **Synchronous Persistence Hydration**: Because MMKV is built on C++ JSI bindings, database access is synchronous. We initialize state variables directly within the `useState` initializer function:
+  ```typescript
+  const [history, setHistory] = useState<number[]>(() => safeStorage.getHistory());
+  ```
+  This eliminates asynchronous `useEffect` layout flashes and ensures instant rendering on app start.
+- **Memoized Derived Calculations**: The app avoids state redundancy. Instead, `logs`, `todayCount`, and `monthCount` are calculated on-the-fly using `useMemo` triggered only when the `history` array changes.
+- **Storage Isolation**: Components never touch the raw MMKV module directly. The centralized `safeStorage` wrapper in `mmkvStorage.ts` acts as a clean facade managing JSON serialization/deserialization, type checks, and errors.
+
+---
+
+## 🚀 Getting Started
+
+### 📋 Prerequisites
+
+Ensure you have completed the React Native [Environment Setup Guide](https://reactnative.dev/docs/set-up-your-environment) for your operating system (Android/iOS SDKs).
+
+### ⚙️ Step 1: Clone and Install Dependencies
+
+Open a terminal at the root of the project:
+```bash
+npm install
 ```
 
-## Step 2: Build and run your app
+### 📱 Step 2: iOS Native Setup (macOS only)
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+Install the native CocoaPods dependencies:
+```bash
 bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
 bundle exec pod install
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### ⚡ Step 3: Run the Development Server
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+Start the Metro bundler:
+```bash
+npm start
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### 🤖 Step 4: Build and Run the App
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+With Metro running in a terminal, launch the platform client in another terminal:
 
-## Step 3: Modify your app
+#### For Android:
+```bash
+npm run android
+```
 
-Now that you have successfully run the app, let's make changes!
+#### For iOS:
+```bash
+npm run ios
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+---
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## 🧪 Running Tests
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-# smokelog
+Validate state logic, layout rendering, and component mocks:
+```bash
+npm test
+```
+The test suite utilizes built-in mocks for `react-native-mmkv` to isolate the native storage logic and verify dashboard rendering correctly.
