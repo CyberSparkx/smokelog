@@ -1,76 +1,59 @@
-import { View, Text, ScrollView } from 'react-native'
-import React from 'react'
-import Button from './components/Button'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import LastSmokeCard from './components/Lastsmokecard'
-import StatCard from './components/StatCard'
-import SmokeHistory from './components/SmokeHistory'
+import React from 'react';
+import { View, Text } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Button from './components/Button';
+import LastSmokeCard from './components/Lastsmokecard';
+import StatCard from './components/StatCard';
+import SmokeHistory from './components/SmokeHistory';
+import { SmokeProvider, useSmoke } from './SmokeContext';
+import { theme } from './styles/Theme';
 
-const App = () => {
-  const demoLastSmokedAt = Date.now() - (3 * 60 + 42) * 60 * 1000;
-
-  const demoLogs = [
-  {
-    id: '1',
-    loggedAt: '2026-07-06T09:15:00',
-  },
-  {
-    id: '2',
-    loggedAt: '2026-07-06T12:40:00',
-  },
-  {
-    id: '3',
-    loggedAt: '2026-07-05T18:20:00',
-  },
-  {
-    id: '4',
-    loggedAt: '2026-07-04T08:05:00',
-  },
-  {
-    id: '5',
-    loggedAt: '2026-07-03T21:10:00',
-  },
-  {
-    id: '6',
-    loggedAt: '2026-07-02T15:45:00',
-  },
-  {
-    id: '7',
-    loggedAt: '2026-07-01T10:30:00',
-  },
-];
+const Screen = () => {
+  const { lastSmokedAt, logs, todayCount, monthCount, storageError, logSmoke } =
+    useSmoke();
 
   return (
-    // <ScrollView>
     <SafeAreaView
       style={{
         flex: 1,
-        justifyContent: 'center',
         paddingHorizontal: 20,
+        paddingVertical: 16,
         gap: 16,
+        backgroundColor: theme.background,
       }}
     >
+      <LastSmokeCard lastSmokedAt={lastSmokedAt} />
 
-     
-      <LastSmokeCard lastSmokedAt={demoLastSmokedAt} />
-      <Button
-        label="Primary Button"
-        variant="primary"
-        onPress={() => console.log('Primary Button Pressed')}
-      />
+      {storageError && (
+        <Text style={{ color: '#F5A623', fontSize: 13, textAlign: 'center' }}>
+          Couldn't save that log — check your device storage.
+        </Text>
+      )}
+
+      <Button label="I smoked one" variant="primary" onPress={logSmoke} />
 
       <View style={{ flexDirection: 'row', gap: 16 }}>
-      <StatCard count={5} label="Today" />
-      <StatCard count={17} label="This Week" />
+        <StatCard count={todayCount} label="Today" />
+        <StatCard count={monthCount} label="This Month" />
       </View>
-      <Text style={{ fontSize: 20, fontWeight: '600', color: '#333',}}>
-              Smoke History
-            </Text>
 
-      <SmokeHistory logs={demoLogs} />
+      <Text style={{ fontSize: 20, fontWeight: '600', color: theme.textPrimary }}>
+        Smoke History
+      </Text>
+
+      <View style={{ flex: 1 }}>
+        <SmokeHistory logs={logs} />
+      </View>
     </SafeAreaView>
-//  </ScrollView>
-  )
-}
+  );
+};
 
-export default App
+const App = () => (
+  <SafeAreaProvider>
+    <SmokeProvider>
+      <Screen />
+    </SmokeProvider>
+  </SafeAreaProvider>
+);
+
+export default App;
